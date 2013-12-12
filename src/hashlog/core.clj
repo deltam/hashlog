@@ -13,6 +13,9 @@
 (defn multiply [key num]
   (fn [hash] (* (hash key) num)))
 
+(defn sum [keys]
+  (fn [hash] (apply + (map #(hash %) keys))))
+
 (defn value [key]
   (fn [hash] (hash key)))
 
@@ -35,7 +38,9 @@
 (defn hash-seq [init-hash log]
   (iterate #(next-hash % log) init-hash))
 
-
+(defn query [q hseq]
+  ((first (filter #(contains? % q) hseq))
+   q))
 
 (comment
 
@@ -56,7 +61,7 @@
     }
    {:cond (every [(exists :priceOfApple) (exists :priceOfOrange)])
     :key :price
-    :val (multiply :orange 80)
+    :val (sum [:priceOfApple :priceOfOrange])
     }
    {:cond (every [(exists :price) (is :hasCoupon true)])
     :key :discountPrice
