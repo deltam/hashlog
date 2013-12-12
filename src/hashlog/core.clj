@@ -13,11 +13,11 @@
 (defn multiply [key num]
   (fn [hash] (* (hash key) num)))
 
-(defn val [key]
+(defn value [key]
   (fn [hash] (hash key)))
 
 
-(defn next-calc [input-hash logs]
+(defn next-hash [input-hash logs]
   (reduce (fn [hash {pred :cond, key :key, val-func :val}]
             (if (pred hash)
               (assoc hash key (val-func hash))
@@ -25,12 +25,16 @@
           input-hash
           logs))
 
-(defn evaluate [hash blocks]
-  (loop [current-hash hash]
-    (let [next-hash (next-calc current-hash blocks)]
-      (if (not= (.hashCode current-hash) (.hashCode next-hash))
-        (recur next-hash)
-        next-hash))))
+(defn evaluate [init-hash blocks]
+  (loop [current init-hash]
+    (let [next (next-hash current blocks)]
+      (if (not= (.hashCode current) (.hashCode next))
+        (recur next)
+        next))))
+
+(defn hash-seq [init-hash log]
+  (iterate #(next-hash % log) init-hash))
+
 
 
 (comment
@@ -60,7 +64,7 @@
     }
    {:cond (every [(exists :price) (is :hasCoupon false)])
     :key :discountPrice
-    :val (val :price)
+    :val (value :price)
     }
    ]
 )
