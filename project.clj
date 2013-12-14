@@ -1,5 +1,5 @@
 (defproject hashlog "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
+  :description "Declarative DSL for updating HashMap"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
