@@ -28,17 +28,27 @@
           input-hash
           logs))
 
-(defn evaluate [init-hash blocks]
-  (loop [current init-hash]
-    (let [next (next-hash current blocks)]
-      (if (not= (.hashCode current) (.hashCode next))
-        (recur next)
-        next))))
+;; 手続き的な書き方
+;(defn evaluate [init-hash blocks]
+;  (loop [current init-hash]
+;    (let [next (next-hash current blocks)]
+;      (if (not= (.hashCode current) (.hashCode next))
+;        (recur next)
+;        next))))
 
-(defn hash-seq [init-hash log]
-  (iterate #(next-hash % log) init-hash))
+(defn hash-seq [init-hash logs]
+  (let [eval-seq (iterate #(let [next (next-hash (:hash %) logs)]
+                             {:hash next
+                              :current (.hashCode next)
+                              :before (:current %)})
+                     {:hash init-hash
+                      :current 1
+                      :before -1})]
+    (map :hash
+         (take-while #(not= (:before %) (:current %))
+                     eval-seq))))
 
-(defn query [q hseq]
+(defn query [hseq q]
   ((first (filter #(contains? % q) hseq))
    q))
 
