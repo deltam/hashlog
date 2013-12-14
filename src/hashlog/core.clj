@@ -84,4 +84,38 @@
    ]
 )
 
+;; 価格計算HashMapのシーケンスを作る
+(def price-seq (hash-seq buy-fruits fruits-price))
+;; 2つ目以降は結果が変わらないのでdropされている
+(take 3 price-seq)
+;({:orange 4, :apple 2}
+; {:orange 4,
+;  :apple 2,
+;  :priceOfApple 200,
+;  :price 520,
+;  :priceOfOrange 320})
+
+;; 価格を知る
+(query price-seq :price)
+;=> 520
+
+
+;; クーポン有りの価格計算
+(def price-seq2 (hash-seq
+                 (assoc buy-fruits :hasCoupon true)
+                 fruits-price))
+(take 3 price-seq2)
+;({:orange 4, :hasCoupon true, :apple 2}
+; {:orange 4,
+;  :hasCoupon true,
+;  :discountPrice 468.0,
+;  :apple 2,
+;  :priceOfApple 200,
+;  :price 520,
+;  :priceOfOrange 320})
+
+(query price-seq2 :discountPrice)
+;=> 468.0
+;; 520の1割引
+
 )
