@@ -37,15 +37,15 @@
 ;        next))))
 
 (defn hash-seq [init-hash logs]
-  (let [eval-seq (iterate #(let [next (next-hash (:hash %) logs)]
+  (let [eval-seq (iterate #(let [next (next-hash (:hash %) logs)
+                                 code (.hashCode (:hash %))]
                              {:hash next
-                              :current (.hashCode next)
-                              :before (:current %)})
+                              :before (conj (:before %) code)})
                      {:hash init-hash
-                      :current 1
-                      :before -1})]
+                      :before #{}})]
     (map :hash
-         (take-while #(not= (:before %) (:current %))
+         (take-while #(not (contains? (:before %)
+                                      (.hashCode (:hash %))))
                      eval-seq))))
 
 (defn query [hseq q]
