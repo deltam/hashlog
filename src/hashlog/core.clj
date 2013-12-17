@@ -47,8 +47,9 @@
                      eval-seq))))
 
 (defn query [hseq q]
-  ((first (filter #(contains? % q) hseq))
-   q))
+  (if-let [hash (last (filter #(contains? % q) hseq))]
+    (hash q)
+    'no-answer))
 
 (comment
 
@@ -71,16 +72,20 @@
     :key :price
     :val (sum [:priceOfApple :priceOfOrange])
     }
-   {:cond (every [(exists :price) (is :hasCoupon true)])
-    :key :discountPrice
-    :val (multiply :price 0.9)
-    }
-   {:cond (every [(exists :price) (is :hasCoupon false)])
-    :key :discountPrice
-    :val (value :price)
-    }
-   ]
-)
+   ])
+
+(def fruits-price-discount
+  (conj fruits-price
+        {:cond (every [(exists :price) (is :hasCoupon true)])
+         :key :discountPrice
+         :val (multiply :price 0.9)
+         }
+        {:cond (every [(exists :price) (is :hasCoupon false)])
+         :key :discountPrice
+         :val (value :price)
+         }
+        ))
+
 
 ;; 価格計算HashMapのシーケンスを作る
 (def price-seq (hash-seq buy-fruits fruits-price))
