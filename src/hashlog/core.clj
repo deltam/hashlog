@@ -21,9 +21,10 @@
 
 
 (defn next-hash [input-hash logs]
-  (reduce (fn [hash {pred :cond, key :key, val-func :val}]
+  (reduce (fn [hash {pred :cond, key :key, val :val}]
             (if (pred hash)
-              (assoc hash key (val-func hash))
+              (let [v (if (fn? val) (val hash) val)]
+                (assoc hash key v))
               hash))
           input-hash
           logs))
