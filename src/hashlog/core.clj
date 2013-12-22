@@ -1,5 +1,6 @@
 (ns hashlog.core)
 
+(declare apply-cond)
 
 (defn exists [key]
   (fn [hash] (contains? hash key)))
@@ -8,7 +9,7 @@
   (fn [hash] (= (hash key) v)))
 
 (defn every [cond-coll]
-  (fn [hash] (every? #(% hash) cond-coll)))
+  (fn [hash] (every? #(apply-cond % hash) cond-coll)))
 
 (defn multiply [key num]
   (fn [hash] (* (hash key) num)))
@@ -20,22 +21,21 @@
   (fn [hash] (hash key)))
 
 
+(defn apply-cond [f hash]
+  (let [pred (cond (vector? f)   (every f)
+                   (not (fn? f)) (exists f)
+                   :else         f)]
+    (pred hash)))
+
 (defn next-hash [input-hash logs]
-  (reduce (fn [hash {pred :cond, key :key, val :val}]
-            (if (pred hash)
-              (let [v (if (fn? val) (val hash) val)]
-                (assoc hash key v))
-              hash))
+  (reduce (fn [hash {condf :cond, key :key, val :val}]
+            (let [v (cond (fn? val) (val hash)
+                          :else     val)]
+              (if (apply-cond condf hash)
+                (assoc hash key v)
+                hash)))
           input-hash
           logs))
-
-;; 手続き的な書き方
-;(defn evaluate [init-hash blocks]
-;  (loop [current init-hash]
-;    (let [next (next-hash current blocks)]
-;      (if (not= (.hashCode current) (.hashCode next))
-;        (recur next)
-;        next))))
 
 (defn hash-seq [init-hash logs]
   (let [eval-seq (iterate #(let [next (next-hash (:hash %) logs)]
@@ -52,6 +52,8 @@
     (hash q)
     'no-answer))
 
+
+
 (comment
 
 (def buy-fruits
@@ -61,15 +63,15 @@
 
 (def fruits-price
   [
-   {:cond (exists :apple)
+   {:cond :apple
     :key :priceOfApple
     :val (multiply :apple 100)
     }
-   {:cond (exists :orange)
+   {:cond :orange
     :key :priceOfOrange
     :val (multiply :orange 80)
     }
-   {:cond (every [(exists :priceOfApple) (exists :priceOfOrange)])
+   {:cond [:priceOfApple :priceOfOrange]
     :key :price
     :val (sum [:priceOfApple :priceOfOrange])
     }
@@ -77,11 +79,11 @@
 
 (def fruits-price-discount
   (conj fruits-price
-        {:cond (every [(exists :price) (is :hasCoupon true)])
+        {:cond [:price (is :hasCoupon true)]
          :key :discountPrice
          :val (multiply :price 0.9)
          }
-        {:cond (every [(exists :price) (is :hasCoupon false)])
+        {:cond [:price (is :hasCoupon false)]
          :key :discountPrice
          :val (value :price)
          }
